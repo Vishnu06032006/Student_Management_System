@@ -1,0 +1,289 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: #f4f5f9;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  #canvas {
+    width: 1560px;
+    padding: 48px 56px 56px;
+    background: #f4f5f9;
+  }
+
+  /* ---------- Title ---------- */
+  .title-block { text-align: center; margin-bottom: 34px; }
+  .eyebrow {
+    font-size: 13px; font-weight: 700; letter-spacing: 3px; color: #6d28d9;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .title { font-size: 30px; font-weight: 800; color: #111827; margin: 0 0 6px; }
+  .subtitle { font-size: 15px; color: #6b7280; }
+
+  /* ---------- Actor ---------- */
+  .actor-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .actor {
+    display: flex; align-items: center; gap: 10px;
+    background: #fffbeb; border: 2px solid #d97706; border-radius: 999px;
+    padding: 10px 22px; font-size: 15px; font-weight: 700; color: #78350f;
+  }
+  .actor-icon {
+    width: 26px; height: 26px; border-radius: 50%; background: #d97706;
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  /* ---------- Arrows between big layers ---------- */
+  .arrow-col { display: flex; flex-direction: column; align-items: center; margin: 2px 0; }
+  .arrow-line { width: 3px; height: 22px; background: #9ca3af; }
+  .arrow-head {
+    width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent;
+    border-top: 12px solid #9ca3af;
+  }
+  .arrow-label {
+    font-size: 12.5px; color: #4b5563; font-weight: 600; background: #ffffff;
+    border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 12px; margin: 4px 0;
+    text-align: center; max-width: 640px; line-height: 1.5;
+  }
+
+  /* ---------- Layer container ---------- */
+  .layer {
+    border-radius: 16px; border: 2px solid; padding: 22px 28px 26px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  }
+  .layer-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+  .layer-badge {
+    font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #fff;
+    border-radius: 6px; padding: 4px 10px; text-transform: uppercase;
+  }
+  .layer-title { font-size: 17px; font-weight: 800; color: #111827; }
+  .layer-desc { font-size: 12.5px; color: #6b7280; margin-left: auto; font-style: italic; }
+
+  .row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+  .row:last-child { margin-bottom: 0; }
+  .row-label {
+    font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase;
+    letter-spacing: 1px; width: 100%; margin-bottom: -2px;
+  }
+
+  .chip {
+    flex: 1 1 0; min-width: 150px;
+    background: #fff; border: 1.5px solid; border-radius: 10px;
+    padding: 10px 14px; box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+  }
+  .chip-title { font-size: 13.5px; font-weight: 700; color: #111827; margin-bottom: 3px; }
+  .chip-sub { font-size: 11.5px; color: #6b7280; line-height: 1.45; }
+
+  .mini-arrow { display: flex; align-items: center; color: #9ca3af; font-size: 20px; font-weight: 700; padding: 0 2px; }
+
+  /* layer color themes */
+  .client { background: #eef2ff; border-color: #4338ca; }
+  .client .layer-badge { background: #4338ca; }
+  .client .chip { border-color: #c7d2fe; }
+
+  .security { background: #fef2f2; border-color: #b91c1c; }
+  .security .layer-badge { background: #b91c1c; }
+  .security .chip { border-color: #fecaca; }
+
+  .app { background: #faf5ff; border-color: #7e22ce; }
+  .app .layer-badge { background: #7e22ce; }
+  .app .chip { border-color: #e9d5ff; }
+  .app .chip.domain { background: #fdf4ff; }
+  .app .chip.util { background: #fefce8; border-color: #fde68a; }
+
+  .data { background: #ecfdf5; border-color: #047857; }
+  .data .layer-badge { background: #047857; }
+  .data .chip { border-color: #a7f3d0; }
+
+  .jobs { background: #fff7ed; border-color: #c2410c; }
+  .jobs .layer-badge { background: #c2410c; }
+  .jobs .chip { border-color: #fed7aa; }
+
+  .ext { background: #f8fafc; border-color: #475569; border-style: dashed; }
+  .ext .layer-badge { background: #475569; }
+  .ext .chip { border-color: #cbd5e1; }
+
+  /* ---------- Bottom fan-out ---------- */
+  .fanout-wrap { margin-top: 4px; }
+  .bus-line { height: 3px; background: #9ca3af; margin: 0 auto 0; }
+  .fanout-row { display: flex; gap: 40px; }
+  .fanout-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .fanout-drop { width: 3px; height: 20px; background: #9ca3af; }
+  .fanout-arrowhead {
+    width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-top: 10px solid #9ca3af;
+  }
+  .bottom-row { display: flex; gap: 40px; margin-top: 30px; align-items: stretch; }
+  .bottom-row > .layer { flex: 1; }
+
+  /* ---------- Legend ---------- */
+  .legend {
+    margin-top: 38px; padding: 16px 22px; background: #fff; border: 1.5px solid #e5e7eb;
+    border-radius: 12px; display: flex; gap: 26px; flex-wrap: wrap; align-items: center;
+    font-size: 12.5px; color: #374151;
+  }
+  .legend-title { font-weight: 800; color: #111827; margin-right: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid; }
+
+  .footnote { margin-top: 14px; font-size: 12px; color: #9ca3af; text-align: center; }
+</style>
+</head>
+<body>
+<div id="canvas">
+
+  <div class="title-block">
+    <div class="eyebrow">System Architecture</div>
+    <div class="title">Student &amp; Staff Management System</div>
+    <div class="subtitle">Role-based institutional ERP — React 19 SPA · Node.js/Express REST API · MongoDB — 3-tier monolith</div>
+  </div>
+
+  <div class="actor-row">
+    <div class="actor"><span class="actor-icon">👤</span> Admin / Staff / Student (Browser)</div>
+  </div>
+  <div class="arrow-col"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ============ CLIENT TIER ============ -->
+  <div class="layer client">
+    <div class="layer-head">
+      <span class="layer-badge">Presentation Tier</span>
+      <span class="layer-title">Client — React 19 + Vite Single-Page App</span>
+      <span class="layer-desc">runs entirely in the browser · no server-side rendering</span>
+    </div>
+    <div class="row">
+      <div class="chip"><div class="chip-title">React Router v7</div><div class="chip-sub">RoleSelect → /login/:role → role-nested routes</div></div>
+      <div class="chip"><div class="chip-title">ProtectedRoute</div><div class="chip-sub">role gate + forces first-login password reset</div></div>
+      <div class="chip"><div class="chip-title">AuthContext / ThemeContext</div><div class="chip-sub">access token in memory only · theme in localStorage</div></div>
+      <div class="chip"><div class="chip-title">Role Layouts</div><div class="chip-sub">Admin / Staff / Student — grouped sidebar + topbar</div></div>
+    </div>
+    <div class="row">
+      <div class="chip"><div class="chip-title">Feature Pages</div><div class="chip-sub">Students · Staff · Academics · Attendance · Timetable · Exams · Leave · OD · Announcements · Reports</div></div>
+      <div class="chip"><div class="chip-title">Shared UI Library</div><div class="chip-sub">DataTable · Modal · hand-built SVG DonutChart / BarChart</div></div>
+      <div class="chip" style="border-color:#4338ca; border-width:2px;"><div class="chip-title">Axios API Client</div><div class="chip-sub">attaches Bearer token · on 401 → silent refresh → retry</div></div>
+    </div>
+  </div>
+
+  <div class="arrow-col">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">HTTPS REST + JSON &nbsp;⇄&nbsp; Authorization: Bearer &lt;accessToken&gt; + httpOnly refreshToken cookie</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- ============ SECURITY / GATEWAY ============ -->
+  <div class="layer security">
+    <div class="layer-head">
+      <span class="layer-badge">Gateway Tier</span>
+      <span class="layer-title">Express Middleware Pipeline — applied to every request</span>
+      <span class="layer-desc">server/app.js + middleware/*</span>
+    </div>
+    <div class="row">
+      <div class="chip"><div class="chip-title">Helmet</div><div class="chip-sub">secure HTTP headers</div></div>
+      <div class="chip"><div class="chip-title">CORS</div><div class="chip-sub">origin locked to CLIENT_URL, credentials:true</div></div>
+      <div class="chip"><div class="chip-title">express-rate-limit</div><div class="chip-sub">tiered: global + login + OTP limiters</div></div>
+      <div class="chip"><div class="chip-title">cookie-parser + json body</div><div class="chip-sub">parses refresh cookie &amp; request payloads</div></div>
+    </div>
+    <div class="row">
+      <div class="chip"><div class="chip-title">authenticate</div><div class="chip-sub">verify JWT signature + re-check LIVE user status in DB on every request</div></div>
+      <div class="chip"><div class="chip-title">restrictTo(role)</div><div class="chip-sub">ADMIN / STAFF / STUDENT authorization</div></div>
+      <div class="chip"><div class="chip-title">requirePasswordChanged</div><div class="chip-sub">blocks all routes until first-login reset done</div></div>
+      <div class="chip"><div class="chip-title">validate(zod schema)</div><div class="chip-sub">request body validation, shared shape with frontend</div></div>
+    </div>
+  </div>
+
+  <div class="arrow-col"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+  <!-- ============ APPLICATION LAYER ============ -->
+  <div class="layer app">
+    <div class="layer-head">
+      <span class="layer-badge">Application Tier</span>
+      <span class="layer-title">Express Application — Routes → Controllers → Services</span>
+      <span class="layer-desc">all business logic lives in the service layer</span>
+    </div>
+    <div class="row" style="align-items:stretch;">
+      <div class="chip"><div class="chip-title">Routes (22 modules)</div><div class="chip-sub">path + middleware + controller wiring only</div></div>
+      <div class="mini-arrow">→</div>
+      <div class="chip"><div class="chip-title">Controllers</div><div class="chip-sub">thin HTTP adapters → uniform {success, message, data} JSON</div></div>
+      <div class="mini-arrow">→</div>
+      <div class="chip"><div class="chip-title">Services</div><div class="chip-sub">business rules, validation, orchestration — the core logic</div></div>
+    </div>
+
+    <div class="row">
+      <div class="row-label">6 business domains (route + controller + service, repeated per domain)</div>
+      <div class="chip domain"><div class="chip-title">Identity &amp; Access</div><div class="chip-sub">auth · students · staff</div></div>
+      <div class="chip domain"><div class="chip-title">Academic Structure</div><div class="chip-sub">years · classes · sections · subjects · enrollment</div></div>
+      <div class="chip domain"><div class="chip-title">Attendance / Timetable / OD</div><div class="chip-sub">attendance · timetable · od-requests</div></div>
+      <div class="chip domain"><div class="chip-title">Examinations</div><div class="chip-sub">exams · exam-schedules · results</div></div>
+      <div class="chip domain"><div class="chip-title">Communication</div><div class="chip-sub">leave · announcements · notifications</div></div>
+      <div class="chip domain"><div class="chip-title">Reports &amp; Admin</div><div class="chip-sub">reports · promotion · activity-logs · backups</div></div>
+    </div>
+
+    <div class="row">
+      <div class="row-label">cross-cutting utilities (used by services, not the request pipeline)</div>
+      <div class="chip util"><div class="chip-title">JWT + bcryptjs</div><div class="chip-sub">token sign/verify · password hashing</div></div>
+      <div class="chip util"><div class="chip-title">Activity Logger</div><div class="chip-sub">every mutation → ActivityLog audit trail</div></div>
+      <div class="chip util"><div class="chip-title">Multer</div><div class="chip-sub">OD proof file upload, MIME + size checked</div></div>
+      <div class="chip util"><div class="chip-title">Nodemailer wrapper</div><div class="chip-sub">password-reset OTP emails</div></div>
+      <div class="chip util"><div class="chip-title">Centralized Error Middleware</div><div class="chip-sub">ApiError / Zod / Mongoose → one JSON shape</div></div>
+    </div>
+  </div>
+
+  <!-- ============ FAN-OUT TO 3 BOTTOM LAYERS ============ -->
+  <div class="fanout-wrap">
+    <div class="fanout-row">
+      <div class="fanout-col"><div class="fanout-drop"></div><div class="fanout-arrowhead"></div></div>
+      <div class="fanout-col"><div class="fanout-drop"></div><div class="fanout-arrowhead"></div></div>
+      <div class="fanout-col"><div class="fanout-drop"></div><div class="fanout-arrowhead"></div></div>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="layer data">
+      <div class="layer-head"><span class="layer-badge">Data Tier</span><span class="layer-title">Persistence</span></div>
+      <div class="row">
+        <div class="chip"><div class="chip-title">MongoDB (via Mongoose)</div><div class="chip-sub">23 collections — User, StudentProfile, StaffProfile, Enrollment, Attendance, Timetable, ExamResult, ODRequest, LeaveRequest, Announcement, Notification, ActivityLog, RefreshSession, PasswordResetOTP, BackupRecord, Counter …</div></div>
+      </div>
+      <div class="row">
+        <div class="chip"><div class="chip-title">Local Disk</div><div class="chip-sub">/uploads/od-proofs (served statically) · /backups (JSON snapshots)</div></div>
+      </div>
+    </div>
+
+    <div class="layer jobs">
+      <div class="layer-head"><span class="layer-badge">Scheduled Job</span><span class="layer-title">Background Process</span></div>
+      <div class="row">
+        <div class="chip"><div class="chip-title">node-cron</div><div class="chip-sub">daily trigger @ 02:00</div></div>
+      </div>
+      <div class="row">
+        <div class="chip"><div class="chip-title">Backup Job</div><div class="chip-sub">dumps every Mongo collection to a timestamped JSON file; logs the run to BackupRecord. Admin can also trigger on demand.</div></div>
+      </div>
+    </div>
+
+    <div class="layer ext">
+      <div class="layer-head"><span class="layer-badge">External</span><span class="layer-title">Email Delivery</span></div>
+      <div class="row">
+        <div class="chip"><div class="chip-title">SMTP Provider</div><div class="chip-sub">any host, configured via .env (e.g. Gmail + App Password)</div></div>
+      </div>
+      <div class="row">
+        <div class="chip"><div class="chip-title">Dev fallback</div><div class="chip-sub">no SMTP_HOST set → OTP code is logged to the server console instead</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LEGEND ============ -->
+  <div class="legend">
+    <span class="legend-title">Legend:</span>
+    <div class="legend-item"><span class="legend-swatch" style="background:#eef2ff;border-color:#4338ca;"></span>Client (Browser)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#fef2f2;border-color:#b91c1c;"></span>Security / Gateway</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#faf5ff;border-color:#7e22ce;"></span>Application logic</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#ecfdf5;border-color:#047857;"></span>Data storage</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#fff7ed;border-color:#c2410c;"></span>Scheduled job</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#f8fafc;border-color:#475569;border-style:dashed;"></span>External integration</div>
+  </div>
+  <div class="footnote">Every component and connection above is drawn from the actual implementation in server/ and client/ — no assumed technologies.</div>
+
+</div>
+</body>
+</html>
